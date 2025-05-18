@@ -1,11 +1,16 @@
 package com.ps;
+import java.time.LocalDate;
+import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class UserInterface {
-    private static final Scanner scanner = new Scanner(System.in);
-    private Dealership dealership;
-    private final DealershipFileManager fileManager = new DealershipFileManager();
+    public static final Scanner scanner = new Scanner(System.in);
+    public Dealership dealership;
+    public final DealershipFileManager fileManager = new DealershipFileManager();
+    public ContractDataManager contractDataManager = new ContractDataManager();
+    public ArrayList<Contract> contracts = new ArrayList<>();
 
     public void init(){
       this.dealership = fileManager.getDealership();
@@ -30,7 +35,7 @@ public class UserInterface {
             while (true) {
                 try {
                     choice = Integer.parseInt(scanner.nextLine());
-                    while (choice > 9 || choice < 0) {
+                    while (choice > 10 || choice < 0) {
                         System.out.println("Enter a valid choice: ");
                         choice = Integer.parseInt(scanner.nextLine());
                     }
@@ -68,6 +73,9 @@ public class UserInterface {
                     case 9:
                         processRemoveVehicleRequest();
                         break;
+                    case 10:
+                        processSalesLeaseRequest();
+                        break;
                     case 0:
                         break;
                     default:
@@ -76,9 +84,52 @@ public class UserInterface {
         }while(choice != 0);
     }
 
+    private void processSalesLeaseRequest() {
+        System.out.println("Enter the vin of the vehicle you are interested in: ");
+        int vin = Integer.parseInt(scanner.nextLine());
+
+        Vehicle vehicle = getVehicleByVIN(vin);
+        System.out.println("Enter your first name: ");
+        String name = scanner.nextLine();
+
+        System.out.println("Enter your email: ");
+        String email = scanner.nextLine();
+
+        String date = LocalDate.now().toString();
+
+        System.out.println("1)Sale");
+        System.out.println("2)Lease");
+        int saleOrLease = Integer.parseInt(scanner.nextLine());
+
+        Contract contract;
+        switch (saleOrLease){
+            case 1:
+                System.out.println("Will you be financing the vehicle? ");
+                boolean isFinanced = scanner.nextLine().equals("yes");
+                Contract salesContract = new SalesContract(vehicle, date, name, email, isFinanced);
+                contracts.add(salesContract);
+                contractDataManager.saveContract(salesContract);
+                dealership.removeVehicle(vehicle);
+                break;
+            case 2:
+                Contract leaseContract = new LeaseContract(vehicle, date, name, email);
+                contracts.add(leaseContract);
+                contractDataManager.saveContract(leaseContract);
+                dealership.removeVehicle(vehicle);
+                break;
+        }
+    }
 
 
 
+    public Vehicle getVehicleByVIN(int vin){
+        for(Vehicle v : dealership.getAllVehicles()){
+            if(v.getVin() == vin){
+                return v;
+            }
+        }
+        return null;
+    }
 
     private void displayMenu(){
         System.out.println("""
@@ -93,6 +144,7 @@ public class UserInterface {
                 7)  List ALL vehicles
                 8)  Add a vehicle
                 9)  Remove a vehicle
+                10) Sale/Lease a vehicle
                 ================================================
                 """);
     }

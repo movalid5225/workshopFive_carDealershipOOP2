@@ -78,6 +78,7 @@ public class Dealership {
         return result;
     }
 
+
     public List<Vehicle> getAllVehicles(){
         return this.inventory;
     }
